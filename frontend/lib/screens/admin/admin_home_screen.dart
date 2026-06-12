@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import 'customers_screen.dart';
 import 'locations_screen.dart';
 import 'products_screen.dart';
+import 'promotions_screen.dart';
 import 'sales_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     AdminLocationsScreen(),
     AdminSalesScreen(),
     AdminCustomersScreen(),
+    AdminPromotionsScreen(),
   ];
 
   @override
@@ -46,6 +48,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           NavigationDestination(icon: Icon(Icons.location_on), label: 'Locations'),
           NavigationDestination(icon: Icon(Icons.point_of_sale), label: 'Sales'),
           NavigationDestination(icon: Icon(Icons.people), label: 'Customers'),
+          NavigationDestination(icon: Icon(Icons.local_offer), label: 'Promotions'),
         ],
       ),
     );

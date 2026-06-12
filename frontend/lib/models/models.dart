@@ -53,6 +53,7 @@ class Product {
   final String? image;
   final bool isActive;
   final bool inStock;
+  final double discountPercentage;
 
   Product({
     required this.id,
@@ -64,7 +65,11 @@ class Product {
     this.image,
     required this.isActive,
     required this.inStock,
+    this.discountPercentage = 0,
   });
+
+  bool get isOnSale => discountPercentage > 0;
+  double get salePrice => isOnSale ? price * (1 - discountPercentage / 100) : price;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -77,6 +82,7 @@ class Product {
       image: json['image'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       inStock: json['in_stock'] as bool? ?? false,
+      discountPercentage: double.parse((json['discount_percentage'] ?? '0').toString()),
     );
   }
 

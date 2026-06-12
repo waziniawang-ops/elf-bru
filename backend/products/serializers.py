@@ -5,6 +5,8 @@ from .models import Product
 
 class ProductSerializer(serializers.ModelSerializer):
     in_stock = serializers.ReadOnlyField()
+    is_on_sale = serializers.ReadOnlyField()
+    sale_price = serializers.ReadOnlyField()
 
     class Meta:
         model = Product
@@ -18,6 +20,9 @@ class ProductSerializer(serializers.ModelSerializer):
             'image',
             'is_active',
             'in_stock',
+            'discount_percentage',
+            'is_on_sale',
+            'sale_price',
             'created_at',
             'updated_at',
         ]

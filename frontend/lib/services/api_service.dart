@@ -270,6 +270,16 @@ class ApiService {
     return _handle(() async => _dio.delete('/products/$id/'));
   }
 
+  Future<Product> setProductDiscount(int id, double percentage) async {
+    return _handle(() async {
+      final response = await _dio.patch(
+        '/products/$id/',
+        data: {'discount_percentage': percentage.toStringAsFixed(2)},
+      );
+      return Product.fromJson(response.data as Map<String, dynamic>);
+    });
+  }
+
   // ── Locations ─────────────────────────────────────────────────────────────
 
   Future<List<PickupLocation>> getLocations() async {
