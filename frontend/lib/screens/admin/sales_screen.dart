@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/api_config.dart';
@@ -105,6 +106,24 @@ class _AdminSalesScreenState extends State<AdminSalesScreen> {
     } else {
       if (mounted) showSnack(context, 'Cannot open screenshot', isError: true);
     }
+  }
+
+  Future<void> _openDeliveryLocation(Order order) async {
+    final url = order.deliveryMapsUrl;
+    if (url == null) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) showSnack(context, 'Cannot open maps', isError: true);
+    }
+  }
+
+  void _copyDeliveryLink(Order order) {
+    final url = order.deliveryMapsUrl;
+    if (url == null) return;
+    Clipboard.setData(ClipboardData(text: url));
+    showSnack(context, 'Location link copied — share with runner');
   }
 
   Color _statusColor(String status) {
@@ -222,7 +241,17 @@ class _AdminSalesScreenState extends State<AdminSalesScreen> {
                                             Text(
                                                 'Customer: ${order.customerPhone}'),
                                             Text(
-                                                'Pickup: ${order.pickupLocationName}'),
+                                                'Fulfillment: ${order.fulfillmentLabel}'),
+                                            if (!order.isDelivery)
+                                              Text(
+                                                  'Pickup: ${order.pickupLocationName ?? '—'}'),
+                                            if (order.isDelivery &&
+                                                order.hasDeliveryLocation) ...[
+                                              Text(
+                                                'Location: ${order.deliveryLatitude!.toStringAsFixed(5)}, '
+                                                '${order.deliveryLongitude!.toStringAsFixed(5)}',
+                                              ),
+                                            ],
                                             if (order.createdAt != null)
                                               Text(
                                                 'Date: ${order.createdAt!.toLocal().toString().substring(0, 16)}',
@@ -280,6 +309,94 @@ class _AdminSalesScreenState extends State<AdminSalesScreen> {
                                               ),
                                             ],
                                             const SizedBox(height: 12),
+                                            if (order.isDelivery &&
+                                                order.hasDeliveryLocation) ...[
+                                              const SizedBox(height: 8),
+                                              Container(
+                                                padding: const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue
+                                                      .withAlpha(15),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                      color: Colors.blue
+                                                          .withAlpha(60)),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    const Icon(
+                                                        Icons.delivery_dining,
+                                                        color: Colors.blue,
+                                                        size: 16),
+                                                    const SizedBox(width: 8),
+                                                    const Expanded(
+                                                      child: Text(
+                                                        'DELIVERY LOCATION',
+                                                        style: TextStyle(
+                                                          color: Colors.blue,
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          letterSpacing: 1,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    TextButton.icon(
+                                                      onPressed: () =>
+                                                          _openDeliveryLocation(
+                                                              order),
+                                                      icon: const Icon(
+                                                          Icons.map_outlined,
+                                                          size: 14,
+                                                          color: Colors.blue),
+                                                      label: const Text(
+                                                        'Open',
+                                                        style: TextStyle(
+                                                            color: Colors.blue,
+                                                            fontSize: 12),
+                                                      ),
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              minimumSize:
+                                                                  Size.zero,
+                                                              tapTargetSize:
+                                                                  MaterialTapTargetSize
+                                                                      .shrinkWrap),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    TextButton.icon(
+                                                      onPressed: () =>
+                                                          _copyDeliveryLink(
+                                                              order),
+                                                      icon: const Icon(
+                                                          Icons.share_outlined,
+                                                          size: 14,
+                                                          color: Colors.blue),
+                                                      label: const Text(
+                                                        'Share',
+                                                        style: TextStyle(
+                                                            color: Colors.blue,
+                                                            fontSize: 12),
+                                                      ),
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              minimumSize:
+                                                                  Size.zero,
+                                                              tapTargetSize:
+                                                                  MaterialTapTargetSize
+                                                                      .shrinkWrap),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                             Wrap(
                                               spacing: 8,
                                               runSpacing: 8,

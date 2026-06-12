@@ -62,6 +62,8 @@ class OrderSerializer(serializers.ModelSerializer):
             'pickup_location_name',
             'fulfillment_method',
             'delivery_charge',
+            'delivery_latitude',
+            'delivery_longitude',
             'payment_method',
             'payment_screenshot',
             'payment_screenshot_url',
@@ -99,6 +101,12 @@ class OrderCreateSerializer(serializers.Serializer):
         required=False,
     )
     pickup_location_id = serializers.IntegerField(required=False, allow_null=True)
+    delivery_latitude = serializers.DecimalField(
+        max_digits=10, decimal_places=7, required=False, allow_null=True,
+    )
+    delivery_longitude = serializers.DecimalField(
+        max_digits=10, decimal_places=7, required=False, allow_null=True,
+    )
     payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices)
     payment_screenshot = serializers.ImageField(required=False, allow_null=True)
     notes = serializers.CharField(required=False, allow_blank=True)
@@ -109,6 +117,11 @@ class OrderCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 'pickup_location_id': 'Pickup location is required for pickup orders.',
             })
+        if fulfillment == Order.FulfillmentMethod.DELIVERY:
+            if not attrs.get('delivery_latitude') or not attrs.get('delivery_longitude'):
+                raise serializers.ValidationError({
+                    'delivery_latitude': 'Delivery location is required for delivery orders.',
+                })
         if attrs['payment_method'] == Order.PaymentMethod.BANK_TRANSFER and not attrs.get('payment_screenshot'):
             raise serializers.ValidationError({
                 'payment_screenshot': 'Payment screenshot is required for bank transfers.',

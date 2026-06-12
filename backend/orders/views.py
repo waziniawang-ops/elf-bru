@@ -162,6 +162,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickup_location=pickup_location,
             fulfillment_method=fulfillment_method,
             delivery_charge=delivery_charge,
+            delivery_latitude=data.get('delivery_latitude'),
+            delivery_longitude=data.get('delivery_longitude'),
             payment_method=data['payment_method'],
             payment_screenshot=data.get('payment_screenshot'),
             notes=data.get('notes', ''),

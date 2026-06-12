@@ -209,6 +209,8 @@ class Order {
   final String? pickupLocationName;
   final String fulfillmentMethod;
   final double deliveryCharge;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final String paymentMethod;
   final String? paymentScreenshot;
   final String? paymentScreenshotUrl;
@@ -227,6 +229,8 @@ class Order {
     this.pickupLocationName,
     required this.fulfillmentMethod,
     required this.deliveryCharge,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.paymentMethod,
     this.paymentScreenshot,
     this.paymentScreenshotUrl,
@@ -239,6 +243,13 @@ class Order {
 
   bool get isDelivery => fulfillmentMethod == 'delivery';
 
+  bool get hasDeliveryLocation =>
+      deliveryLatitude != null && deliveryLongitude != null;
+
+  String? get deliveryMapsUrl => hasDeliveryLocation
+      ? 'https://www.google.com/maps?q=$deliveryLatitude,$deliveryLongitude'
+      : null;
+
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'] as int,
@@ -249,6 +260,12 @@ class Order {
       pickupLocationName: json['pickup_location_name'] as String?,
       fulfillmentMethod: json['fulfillment_method'] as String? ?? 'pickup',
       deliveryCharge: double.parse((json['delivery_charge'] ?? '0').toString()),
+      deliveryLatitude: json['delivery_latitude'] != null
+          ? double.tryParse(json['delivery_latitude'].toString())
+          : null,
+      deliveryLongitude: json['delivery_longitude'] != null
+          ? double.tryParse(json['delivery_longitude'].toString())
+          : null,
       paymentMethod: json['payment_method'] as String? ?? '',
       paymentScreenshot: json['payment_screenshot'] as String?,
       paymentScreenshotUrl: json['payment_screenshot_url'] as String?,

@@ -374,6 +374,8 @@ class ApiService {
   Future<Order> createOrder({
     required String fulfillmentMethod,
     int? pickupLocationId,
+    double? deliveryLatitude,
+    double? deliveryLongitude,
     required String paymentMethod,
     File? paymentScreenshot,
     List<int>? paymentScreenshotBytes,
@@ -388,6 +390,10 @@ class ApiService {
       };
       if (pickupLocationId != null) {
         map['pickup_location_id'] = pickupLocationId;
+      }
+      if (deliveryLatitude != null) {
+        map['delivery_latitude'] = deliveryLatitude.toStringAsFixed(7);
+        map['delivery_longitude'] = deliveryLongitude!.toStringAsFixed(7);
       }
       if (paymentScreenshot != null) {
         map['payment_screenshot'] = await MultipartFile.fromFile(

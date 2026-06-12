@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/models.dart';
@@ -11,6 +12,7 @@ import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/map_location_picker.dart';
 
 const double _kDeliveryCharge = 3.00;
 
@@ -30,10 +32,10 @@ class _CartScreenState extends State<CartScreen> {
 
   String _fulfillmentMethod = 'pickup';
   int? _selectedLocationId;
+  LatLng? _deliveryLocation;
   String _paymentMethod = 'cash';
   XFile? _paymentScreenshot;
   final _notesController = TextEditingController();
-  final _addressController = TextEditingController();
   bool _checkingOut = false;
 
   @override
@@ -45,7 +47,6 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void dispose() {
     _notesController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -179,8 +180,8 @@ class _CartScreenState extends State<CartScreen> {
       showSnack(context, 'Please select a pickup location', isError: true);
       return;
     }
-    if (_fulfillmentMethod == 'delivery' && _addressController.text.trim().isEmpty) {
-      showSnack(context, 'Please enter your delivery address', isError: true);
+    if (_fulfillmentMethod == 'delivery' && _deliveryLocation == null) {
+      showSnack(context, 'Please pin your delivery location on the map', isError: true);
       return;
     }
     if (_paymentMethod == 'bank_transfer' && _paymentScreenshot == null) {
@@ -195,21 +196,18 @@ class _CartScreenState extends State<CartScreen> {
 
     setState(() => _checkingOut = true);
     try {
-      final notes = _fulfillmentMethod == 'delivery'
-          ? 'Delivery address: ${_addressController.text.trim()}'
-              '${_notesController.text.isNotEmpty ? '\n${_notesController.text}' : ''}'
-          : _notesController.text;
-
       if (_paymentScreenshot != null && kIsWeb) {
         final bytes = await _paymentScreenshot!.readAsBytes();
         await ApiService.instance.createOrder(
           fulfillmentMethod: _fulfillmentMethod,
           pickupLocationId:
               _fulfillmentMethod == 'pickup' ? _selectedLocationId : null,
+          deliveryLatitude: _deliveryLocation?.latitude,
+          deliveryLongitude: _deliveryLocation?.longitude,
           paymentMethod: _paymentMethod,
           paymentScreenshotBytes: bytes,
           paymentScreenshotName: _paymentScreenshot!.name,
-          notes: notes,
+          notes: _notesController.text,
         );
       } else {
         File? screenshotFile;
@@ -220,9 +218,11 @@ class _CartScreenState extends State<CartScreen> {
           fulfillmentMethod: _fulfillmentMethod,
           pickupLocationId:
               _fulfillmentMethod == 'pickup' ? _selectedLocationId : null,
+          deliveryLatitude: _deliveryLocation?.latitude,
+          deliveryLongitude: _deliveryLocation?.longitude,
           paymentMethod: _paymentMethod,
           paymentScreenshot: screenshotFile,
-          notes: notes,
+          notes: _notesController.text,
         );
       }
       if (mounted) {
@@ -230,8 +230,8 @@ class _CartScreenState extends State<CartScreen> {
         setState(() {
           _paymentScreenshot = null;
           _paymentMethod = 'cash';
+          _deliveryLocation = null;
           _notesController.clear();
-          _addressController.clear();
         });
         context.read<CartProvider>().clear();
       }
@@ -578,20 +578,57 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ],
 
-          // Delivery address (delivery only)
+          // Delivery location map (delivery only)
           if (_fulfillmentMethod == 'delivery') ...[
             const SizedBox(height: 20),
-            _sectionLabel('DELIVERY ADDRESS'),
+            _sectionLabel('DELIVERY LOCATION'),
             const SizedBox(height: 10),
-            TextField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Delivery Address',
-                hintText: 'Street, City, Postal Code',
-                prefixIcon: Icon(Icons.location_on_outlined),
+            if (_deliveryLocation != null)
+              MapLocationPreview(
+                location: _deliveryLocation!,
+                onTap: () async {
+                  final picked = await MapLocationPicker.show(
+                    context,
+                    initial: _deliveryLocation,
+                  );
+                  if (picked != null) setState(() => _deliveryLocation = picked);
+                },
+              )
+            else
+              GestureDetector(
+                onTap: () async {
+                  final picked = await MapLocationPicker.show(context);
+                  if (picked != null) setState(() => _deliveryLocation = picked);
+                },
+                child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceMid,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primary.withAlpha(100),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_location_alt_outlined,
+                          color: AppTheme.primary, size: 26),
+                      SizedBox(width: 10),
+                      Text(
+                        'TAP TO PIN YOUR LOCATION',
+                        style: TextStyle(
+                          color: AppTheme.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              maxLines: 2,
-            ),
           ],
 
           const SizedBox(height: 20),
