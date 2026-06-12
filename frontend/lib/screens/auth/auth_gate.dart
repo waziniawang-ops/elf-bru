@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Icon(Icons.storefront, size: 72, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 12),
                   Text(
-                    'Beauty Shop',
+                    'Elf Bru',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

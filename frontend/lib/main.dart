@@ -24,7 +24,7 @@ class WifeBusinessApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: MaterialApp(
-        title: 'Beauty Shop',
+        title: 'Elf Bru',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
         home: const AuthGate(),

@@ -29,7 +29,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Portal'),
+        title: const Text('Elf Bru Admin'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

@@ -1,6 +1,6 @@
-# Wife's Business — Makeup & Retail Shop
+# Elf Bru — Beauty & Retail Shop
 
-Full-stack shop app with a **Django REST API** backend and **Flutter** frontend for customers and admin.
+Full-stack shop app for **Elf Bru** with a **Django REST API** backend and **Flutter** frontend for customers and admin.
 
 ## Features
 
@@ -78,7 +78,7 @@ Receipt HTML: `GET /api/orders/sales/{id}/receipt/print/` (requires auth)
 ## Project structure
 
 ```
-wife_business/
+elf_bru/
 ├── backend/          # Django + DRF
 │   ├── accounts/     # Phone auth, customers, blacklist
 │   ├── products/     # Product catalog

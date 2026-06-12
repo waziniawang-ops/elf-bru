@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: wife-business-api
+    name: elf-bru-api
     runtime: python
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
@@ -12,10 +12,10 @@ services:
       - key: DEBUG
         value: false
       - key: ALLOWED_HOSTS
-        value: wife-business-api.onrender.com
+        value: elf-bru-api.onrender.com
       - key: DATABASE_URL
         fromDatabase:
-          name: wife-business-db
+          name: elf-bru-db
           property: connectionString
       - key: CORS_ALLOWED_ORIGINS
         value: https://your-github-username.github.io
@@ -24,6 +24,6 @@ services:
       # BANK_NAME, BANK_ACCOUNT_NAME, BANK_ACCOUNT_NUMBER, BANK_INSTRUCTIONS
 
 databases:
-  - name: wife-business-db
-    databaseName: wife_business
+  - name: elf-bru-db
+    databaseName: elf_bru
     plan: free
