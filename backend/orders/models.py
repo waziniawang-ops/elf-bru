@@ -48,8 +48,19 @@ class Order(models.Model):
         COMPLETED = 'completed', 'Completed'
         CANCELLED = 'cancelled', 'Cancelled'
 
+    class FulfillmentMethod(models.TextChoices):
+        PICKUP = 'pickup', 'Pickup'
+        DELIVERY = 'delivery', 'Delivery'
+
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')
-    pickup_location = models.ForeignKey(PickupLocation, on_delete=models.PROTECT, related_name='orders')
+    pickup_location = models.ForeignKey(
+        PickupLocation, on_delete=models.PROTECT, related_name='orders',
+        null=True, blank=True,
+    )
+    fulfillment_method = models.CharField(
+        max_length=20, choices=FulfillmentMethod.choices, default=FulfillmentMethod.PICKUP,
+    )
+    delivery_charge = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices)
     payment_screenshot = models.ImageField(upload_to='payments/', blank=True, null=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -65,10 +76,10 @@ class Order(models.Model):
         return f'Order #{self.pk} - {self.customer.phone_number}'
 
     def recalculate_total(self):
-        total = sum(item.subtotal for item in self.items.all())
-        self.total_amount = total
+        items_total = sum(item.subtotal for item in self.items.all())
+        self.total_amount = items_total + self.delivery_charge
         self.save(update_fields=['total_amount', 'updated_at'])
-        return total
+        return self.total_amount
 
 
 class OrderItem(models.Model):

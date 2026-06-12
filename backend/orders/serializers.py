@@ -48,7 +48,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     customer_phone = serializers.CharField(source='customer.phone_number', read_only=True)
-    pickup_location_name = serializers.CharField(source='pickup_location.name', read_only=True)
+    pickup_location_name = serializers.SerializerMethodField()
     payment_screenshot_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -60,6 +60,8 @@ class OrderSerializer(serializers.ModelSerializer):
             'customer_phone',
             'pickup_location',
             'pickup_location_name',
+            'fulfillment_method',
+            'delivery_charge',
             'payment_method',
             'payment_screenshot',
             'payment_screenshot_url',
@@ -70,7 +72,12 @@ class OrderSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'customer', 'total_amount', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'customer', 'total_amount', 'delivery_charge', 'created_at', 'updated_at']
+
+    def get_pickup_location_name(self, obj):
+        if obj.pickup_location:
+            return obj.pickup_location.name
+        return None
 
     def get_payment_screenshot_url(self, obj):
         if not obj.payment_screenshot:
@@ -86,12 +93,22 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.Serializer):
-    pickup_location_id = serializers.IntegerField()
+    fulfillment_method = serializers.ChoiceField(
+        choices=Order.FulfillmentMethod.choices,
+        default=Order.FulfillmentMethod.PICKUP,
+        required=False,
+    )
+    pickup_location_id = serializers.IntegerField(required=False, allow_null=True)
     payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices)
     payment_screenshot = serializers.ImageField(required=False, allow_null=True)
     notes = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
+        fulfillment = attrs.get('fulfillment_method', Order.FulfillmentMethod.PICKUP)
+        if fulfillment == Order.FulfillmentMethod.PICKUP and not attrs.get('pickup_location_id'):
+            raise serializers.ValidationError({
+                'pickup_location_id': 'Pickup location is required for pickup orders.',
+            })
         if attrs['payment_method'] == Order.PaymentMethod.BANK_TRANSFER and not attrs.get('payment_screenshot'):
             raise serializers.ValidationError({
                 'payment_screenshot': 'Payment screenshot is required for bank transfers.',
@@ -99,6 +116,8 @@ class OrderCreateSerializer(serializers.Serializer):
         return attrs
 
     def validate_pickup_location_id(self, value):
+        if value is None:
+            return None
         from locations.models import PickupLocation
         if not PickupLocation.objects.filter(pk=value, is_active=True).exists():
             raise serializers.ValidationError('Invalid pickup location.')

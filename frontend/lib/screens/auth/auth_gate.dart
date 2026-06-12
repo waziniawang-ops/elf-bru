@@ -73,8 +73,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: RadialGradient(
-            colors: [Color(0xFF1C0D15), AppTheme.bgDark],
-            radius: 1.4,
+            colors: [AppTheme.surfaceMid, AppTheme.bgDark],
+            radius: 1.2,
             center: Alignment.topCenter,
           ),
         ),

@@ -12,6 +12,8 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
+const double _kDeliveryCharge = 3.00;
+
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
 
@@ -25,10 +27,13 @@ class _CartScreenState extends State<CartScreen> {
   BankDetails _bankDetails = const BankDetails.empty();
   bool _loading = true;
   String? _error;
+
+  String _fulfillmentMethod = 'pickup';
   int? _selectedLocationId;
   String _paymentMethod = 'cash';
   XFile? _paymentScreenshot;
   final _notesController = TextEditingController();
+  final _addressController = TextEditingController();
   bool _checkingOut = false;
 
   @override
@@ -40,6 +45,7 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -78,7 +84,9 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  double get _total => _items.fold(0, (sum, item) => sum + item.subtotal);
+  double get _itemsTotal => _items.fold(0, (sum, item) => sum + item.subtotal);
+  double get _grandTotal =>
+      _fulfillmentMethod == 'delivery' ? _itemsTotal + _kDeliveryCharge : _itemsTotal;
 
   Future<void> _updateQuantity(CartItem item, int qty) async {
     try {
@@ -99,9 +107,80 @@ class _CartScreenState extends State<CartScreen> {
     if (file != null) setState(() => _paymentScreenshot = file);
   }
 
+  Future<bool> _showPickupDisclaimer() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: AppTheme.surfaceDark,
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppTheme.gold, size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              'PICKUP REMINDER',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Please collect your purchase within 2 weeks of your order being placed.\n\n'
+          'Items not collected within this period may be returned to stock.',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 14,
+            height: 1.6,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text(
+                'I ACKNOWLEDGE',
+                style: TextStyle(letterSpacing: 1.5, fontSize: 12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textMuted),
+              ),
+            ),
+          ),
+        ],
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+    );
+    return result ?? false;
+  }
+
   Future<void> _checkout() async {
-    if (_selectedLocationId == null) {
+    if (_fulfillmentMethod == 'pickup' && _selectedLocationId == null) {
       showSnack(context, 'Please select a pickup location', isError: true);
+      return;
+    }
+    if (_fulfillmentMethod == 'delivery' && _addressController.text.trim().isEmpty) {
+      showSnack(context, 'Please enter your delivery address', isError: true);
       return;
     }
     if (_paymentMethod == 'bank_transfer' && _paymentScreenshot == null) {
@@ -109,16 +188,28 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
+    if (_fulfillmentMethod == 'pickup') {
+      final acknowledged = await _showPickupDisclaimer();
+      if (!acknowledged) return;
+    }
+
     setState(() => _checkingOut = true);
     try {
+      final notes = _fulfillmentMethod == 'delivery'
+          ? 'Delivery address: ${_addressController.text.trim()}'
+              '${_notesController.text.isNotEmpty ? '\n${_notesController.text}' : ''}'
+          : _notesController.text;
+
       if (_paymentScreenshot != null && kIsWeb) {
         final bytes = await _paymentScreenshot!.readAsBytes();
         await ApiService.instance.createOrder(
-          pickupLocationId: _selectedLocationId!,
+          fulfillmentMethod: _fulfillmentMethod,
+          pickupLocationId:
+              _fulfillmentMethod == 'pickup' ? _selectedLocationId : null,
           paymentMethod: _paymentMethod,
           paymentScreenshotBytes: bytes,
           paymentScreenshotName: _paymentScreenshot!.name,
-          notes: _notesController.text,
+          notes: notes,
         );
       } else {
         File? screenshotFile;
@@ -126,10 +217,12 @@ class _CartScreenState extends State<CartScreen> {
           screenshotFile = File(_paymentScreenshot!.path);
         }
         await ApiService.instance.createOrder(
-          pickupLocationId: _selectedLocationId!,
+          fulfillmentMethod: _fulfillmentMethod,
+          pickupLocationId:
+              _fulfillmentMethod == 'pickup' ? _selectedLocationId : null,
           paymentMethod: _paymentMethod,
           paymentScreenshot: screenshotFile,
-          notes: _notesController.text,
+          notes: notes,
         );
       }
       if (mounted) {
@@ -138,6 +231,7 @@ class _CartScreenState extends State<CartScreen> {
           _paymentScreenshot = null;
           _paymentMethod = 'cash';
           _notesController.clear();
+          _addressController.clear();
         });
         context.read<CartProvider>().clear();
       }
@@ -200,6 +294,81 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Widget _fulfillmentTile({
+    required String value,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final selected = _fulfillmentMethod == value;
+    return GestureDetector(
+      onTap: () => setState(() => _fulfillmentMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.surfaceMid : AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppTheme.primary : AppTheme.borderColor,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: selected ? AppTheme.primary : AppTheme.textMuted,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: selected ? AppTheme.textPrimary : AppTheme.textMuted,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              Container(
+                width: 18,
+                height: 18,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.primary,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 12),
+              )
+            else
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) return const LoadingView();
@@ -229,6 +398,7 @@ class _CartScreenState extends State<CartScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Cart items
           ..._items.map((item) => Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -284,6 +454,8 @@ class _CartScreenState extends State<CartScreen> {
               )),
 
           const SizedBox(height: 16),
+
+          // Total box
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -291,47 +463,143 @@ class _CartScreenState extends State<CartScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppTheme.borderColor),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                const Text(
-                  'TOTAL',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2.5,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'ITEMS',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    Text(
+                      currencyFormat.format(_itemsTotal),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  currencyFormat.format(_total),
-                  style: const TextStyle(
-                    color: AppTheme.gold,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                if (_fulfillmentMethod == 'delivery') ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'DELIVERY',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Text(
+                        currencyFormat.format(_kDeliveryCharge),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(color: AppTheme.borderColor, height: 1),
+                  ),
+                ],
+                if (_fulfillmentMethod == 'delivery') const SizedBox(height: 0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'TOTAL',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2.5,
+                      ),
+                    ),
+                    Text(
+                      currencyFormat.format(_grandTotal),
+                      style: const TextStyle(
+                        color: AppTheme.gold,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
           const SizedBox(height: 24),
-          _sectionLabel('PICKUP LOCATION'),
+
+          // Fulfillment selector
+          _sectionLabel('FULFILLMENT'),
           const SizedBox(height: 10),
-          DropdownButtonFormField<int>(
-            value: _selectedLocationId,
-            decoration: const InputDecoration(labelText: 'Select location'),
-            items: _locations
-                .map((loc) => DropdownMenuItem(value: loc.id, child: Text(loc.name)))
-                .toList(),
-            onChanged: (v) => setState(() => _selectedLocationId = v),
+          _fulfillmentTile(
+            value: 'pickup',
+            icon: Icons.store_outlined,
+            title: 'Store Pickup',
+            subtitle: 'Collect in-store · Free',
           ),
+          const SizedBox(height: 8),
+          _fulfillmentTile(
+            value: 'delivery',
+            icon: Icons.local_shipping_outlined,
+            title: 'Delivery',
+            subtitle: 'Delivered to your address · \$${_kDeliveryCharge.toStringAsFixed(2)}',
+          ),
+
+          // Pickup location (pickup only)
+          if (_fulfillmentMethod == 'pickup') ...[
+            const SizedBox(height: 20),
+            _sectionLabel('PICKUP LOCATION'),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<int>(
+              value: _selectedLocationId,
+              decoration: const InputDecoration(labelText: 'Select location'),
+              items: _locations
+                  .map((loc) => DropdownMenuItem(value: loc.id, child: Text(loc.name)))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedLocationId = v),
+            ),
+          ],
+
+          // Delivery address (delivery only)
+          if (_fulfillmentMethod == 'delivery') ...[
+            const SizedBox(height: 20),
+            _sectionLabel('DELIVERY ADDRESS'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _addressController,
+              decoration: const InputDecoration(
+                labelText: 'Delivery Address',
+                hintText: 'Street, City, Postal Code',
+                prefixIcon: Icon(Icons.location_on_outlined),
+              ),
+              maxLines: 2,
+            ),
+          ],
 
           const SizedBox(height: 20),
           _sectionLabel('PAYMENT METHOD'),
           RadioListTile<String>(
-            title: const Text('Cash on Pickup'),
+            title: Text(
+              _fulfillmentMethod == 'delivery' ? 'Cash on Delivery' : 'Cash on Pickup',
+            ),
             value: 'cash',
             groupValue: _paymentMethod,
             onChanged: (v) => setState(() => _paymentMethod = v!),

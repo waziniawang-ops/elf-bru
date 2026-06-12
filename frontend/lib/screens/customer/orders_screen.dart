@@ -187,7 +187,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _infoRow('Pickup', order.pickupLocationName),
+                      _infoRow('Fulfillment', order.fulfillmentLabel),
+                      if (!order.isDelivery && order.pickupLocationName != null)
+                        _infoRow('Location', order.pickupLocationName!),
+                      if (order.isDelivery)
+                        _infoRow('Delivery charge', currencyFormat.format(order.deliveryCharge)),
                       _infoRow('Payment', order.paymentMethodLabel),
                       const SizedBox(height: 12),
                       const Text(
@@ -259,7 +263,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -269,7 +273,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
           ),
           Text(
-            value,
+            value ?? '—',
             style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
           ),
         ],

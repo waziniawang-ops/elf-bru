@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
@@ -142,17 +144,31 @@ class OrderViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        pickup_location = get_object_or_404(PickupLocation, pk=data['pickup_location_id'], is_active=True)
+        fulfillment_method = data.get('fulfillment_method', Order.FulfillmentMethod.PICKUP)
+        delivery_charge = (
+            Decimal(str(getattr(settings, 'DELIVERY_CHARGE', '3.00')))
+            if fulfillment_method == Order.FulfillmentMethod.DELIVERY
+            else Decimal('0')
+        )
+
+        pickup_location = None
+        if fulfillment_method == Order.FulfillmentMethod.PICKUP:
+            pickup_location = get_object_or_404(
+                PickupLocation, pk=data['pickup_location_id'], is_active=True
+            )
+
         order = Order.objects.create(
             customer=request.user,
             pickup_location=pickup_location,
+            fulfillment_method=fulfillment_method,
+            delivery_charge=delivery_charge,
             payment_method=data['payment_method'],
             payment_screenshot=data.get('payment_screenshot'),
             notes=data.get('notes', ''),
             status=Order.Status.PENDING,
         )
 
-        total = 0
+        items_total = Decimal('0')
         for cart_item in cart_items:
             product = cart_item.product
             OrderItem.objects.create(
@@ -164,9 +180,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
             product.quantity -= cart_item.quantity
             product.save(update_fields=['quantity', 'updated_at'])
-            total += product.price * cart_item.quantity
+            items_total += product.price * cart_item.quantity
 
-        order.total_amount = total
+        order.total_amount = items_total + delivery_charge
         order.save(update_fields=['total_amount', 'updated_at'])
         cart_items.delete()
 

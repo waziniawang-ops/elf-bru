@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
@@ -373,7 +372,8 @@ class ApiService {
   }
 
   Future<Order> createOrder({
-    required int pickupLocationId,
+    required String fulfillmentMethod,
+    int? pickupLocationId,
     required String paymentMethod,
     File? paymentScreenshot,
     List<int>? paymentScreenshotBytes,
@@ -382,10 +382,13 @@ class ApiService {
   }) async {
     return _handle(() async {
       final map = <String, dynamic>{
-        'pickup_location_id': pickupLocationId,
+        'fulfillment_method': fulfillmentMethod,
         'payment_method': paymentMethod,
         'notes': notes,
       };
+      if (pickupLocationId != null) {
+        map['pickup_location_id'] = pickupLocationId;
+      }
       if (paymentScreenshot != null) {
         map['payment_screenshot'] = await MultipartFile.fromFile(
           paymentScreenshot.path,

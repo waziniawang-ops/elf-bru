@@ -147,3 +147,6 @@ BANK_INSTRUCTIONS = config(
 
 # Currency symbol shown in the frontend
 CURRENCY_SYMBOL = config('CURRENCY_SYMBOL', default='$')
+
+# Flat delivery charge applied to delivery orders
+DELIVERY_CHARGE = config('DELIVERY_CHARGE', default='3.00')

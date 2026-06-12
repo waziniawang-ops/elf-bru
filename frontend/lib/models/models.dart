@@ -205,8 +205,10 @@ class Order {
   final int customerId;
   final String customerName;
   final String customerPhone;
-  final int pickupLocationId;
-  final String pickupLocationName;
+  final int? pickupLocationId;
+  final String? pickupLocationName;
+  final String fulfillmentMethod;
+  final double deliveryCharge;
   final String paymentMethod;
   final String? paymentScreenshot;
   final String? paymentScreenshotUrl;
@@ -221,8 +223,10 @@ class Order {
     required this.customerId,
     required this.customerName,
     required this.customerPhone,
-    required this.pickupLocationId,
-    required this.pickupLocationName,
+    this.pickupLocationId,
+    this.pickupLocationName,
+    required this.fulfillmentMethod,
+    required this.deliveryCharge,
     required this.paymentMethod,
     this.paymentScreenshot,
     this.paymentScreenshotUrl,
@@ -233,14 +237,18 @@ class Order {
     this.createdAt,
   });
 
+  bool get isDelivery => fulfillmentMethod == 'delivery';
+
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'] as int,
       customerId: json['customer'] as int? ?? 0,
       customerName: json['customer_name'] as String? ?? '',
       customerPhone: json['customer_phone'] as String? ?? '',
-      pickupLocationId: json['pickup_location'] as int? ?? 0,
-      pickupLocationName: json['pickup_location_name'] as String? ?? '',
+      pickupLocationId: json['pickup_location'] as int?,
+      pickupLocationName: json['pickup_location_name'] as String?,
+      fulfillmentMethod: json['fulfillment_method'] as String? ?? 'pickup',
+      deliveryCharge: double.parse((json['delivery_charge'] ?? '0').toString()),
       paymentMethod: json['payment_method'] as String? ?? '',
       paymentScreenshot: json['payment_screenshot'] as String?,
       paymentScreenshotUrl: json['payment_screenshot_url'] as String?,
@@ -258,6 +266,9 @@ class Order {
 
   String get paymentMethodLabel =>
       paymentMethod == 'bank_transfer' ? 'Bank Transfer' : 'Cash';
+
+  String get fulfillmentLabel =>
+      fulfillmentMethod == 'delivery' ? 'Delivery' : 'Pickup';
 
   String get statusLabel {
     switch (status) {

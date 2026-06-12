@@ -5,21 +5,21 @@ import 'package:intl/intl.dart';
 final currencyFormat = NumberFormat.currency(symbol: '\$');
 
 class AppTheme {
-  // Luxury dark-pink palette
+  // Luxury warm-light palette
   static const Color primary     = Color(0xFFC2185B); // deep rose
   static const Color primaryDark = Color(0xFF880E4F); // darker rose
   static const Color gold        = Color(0xFFD4AF37); // champagne gold
-  static const Color bgDark      = Color(0xFF0F0B0D); // near-black
-  static const Color surfaceDark = Color(0xFF1E1218); // card bg
-  static const Color surfaceMid  = Color(0xFF2A1A22); // elevated surface
-  static const Color borderColor = Color(0xFF3D2030); // subtle border
-  static const Color textPrimary = Color(0xFFF5EEF0); // cream white
-  static const Color textMuted   = Color(0xFF9E8490); // muted rose-grey
+  static const Color bgDark      = Color(0xFFFDF8F5); // warm off-white bg
+  static const Color surfaceDark = Color(0xFFFFFFFF); // card white
+  static const Color surfaceMid  = Color(0xFFFFF0EB); // warm blush surface
+  static const Color borderColor = Color(0xFFF2DDD6); // soft rose border
+  static const Color textPrimary = Color(0xFF1A0A10); // dark warm text
+  static const Color textMuted   = Color(0xFF9E7070); // warm rose-grey
 
   static ThemeData get theme {
-    return ThemeData.dark(useMaterial3: true).copyWith(
+    return ThemeData(useMaterial3: true).copyWith(
       scaffoldBackgroundColor: bgDark,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: primary,
         onPrimary: Colors.white,
         secondary: primaryDark,
@@ -30,6 +30,7 @@ class AppTheme {
         tertiary: gold,
         onTertiary: Colors.black,
         error: Color(0xFFEF5350),
+        onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: bgDark,
@@ -39,7 +40,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
+          statusBarIconBrightness: Brightness.dark,
         ),
         titleTextStyle: TextStyle(
           color: textPrimary,
