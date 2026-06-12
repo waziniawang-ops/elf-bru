@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../theme/app_theme.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
 import 'products_screen.dart';
@@ -30,62 +31,71 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(['Shop', 'Wishlist', 'Cart', 'Orders'][_index]),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Profile',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Center(
-              child: Text(
-                auth.user?.fullName.isNotEmpty == true
-                    ? auth.user!.fullName
-                    : auth.user?.phoneNumber ?? '',
-                style: const TextStyle(fontSize: 13),
-                overflow: TextOverflow.ellipsis,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        child: AppBar(
+          title: const Text('ELF BRU'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              tooltip: 'Profile',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
               ),
             ),
+            IconButton(
+              icon: const Icon(Icons.logout, size: 20),
+              tooltip: 'Sign out',
+              onPressed: () => auth.logout(),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppTheme.borderColor),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => auth.logout(),
-          ),
-        ],
+        ),
       ),
       body: _screens[_index],
       bottomNavigationBar: Consumer<CartProvider>(
-        builder: (context, cart, _) => NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.store),
-              label: 'Shop',
-            ),
-            const NavigationDestination(
-              icon: Icon(Icons.favorite_border),
-              label: 'Wishlist',
-            ),
-            NavigationDestination(
-              icon: Badge(
-                isLabelVisible: cart.itemCount > 0,
-                label: Text('${cart.itemCount}'),
-                child: const Icon(Icons.shopping_cart),
+        builder: (context, cart, _) => Container(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppTheme.borderColor, width: 1)),
+          ),
+          child: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.storefront_outlined),
+                selectedIcon: Icon(Icons.storefront),
+                label: 'Shop',
               ),
-              label: 'Cart',
-            ),
-            const NavigationDestination(
-              icon: Icon(Icons.receipt_long),
-              label: 'Orders',
-            ),
-          ],
+              const NavigationDestination(
+                icon: Icon(Icons.favorite_border),
+                selectedIcon: Icon(Icons.favorite),
+                label: 'Wishlist',
+              ),
+              NavigationDestination(
+                icon: Badge(
+                  isLabelVisible: cart.itemCount > 0,
+                  label: Text('${cart.itemCount}'),
+                  child: const Icon(Icons.shopping_bag_outlined),
+                ),
+                selectedIcon: Badge(
+                  isLabelVisible: cart.itemCount > 0,
+                  label: Text('${cart.itemCount}'),
+                  child: const Icon(Icons.shopping_bag),
+                ),
+                label: 'Cart',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.receipt_long_outlined),
+                selectedIcon: Icon(Icons.receipt_long),
+                label: 'Orders',
+              ),
+            ],
+          ),
         ),
       ),
     );

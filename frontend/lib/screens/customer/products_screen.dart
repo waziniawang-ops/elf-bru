@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/models.dart';
 import '../../services/api_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import 'product_detail_screen.dart';
 
@@ -59,22 +60,52 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Search bar
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
           child: TextField(
             controller: _searchController,
+            style: const TextStyle(color: AppTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search products...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                  _load();
-                },
-              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _load();
+                      },
+                    )
+                  : null,
             ),
             onSubmitted: (_) => _load(),
+          ),
+        ),
+        // Section label
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Row(
+            children: [
+              Container(width: 3, height: 14, color: AppTheme.gold),
+              const SizedBox(width: 8),
+              const Text(
+                'COLLECTION',
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2.5,
+                ),
+              ),
+              if (!_loading && _products.isNotEmpty) ...[
+                const Spacer(),
+                Text(
+                  '${_products.length} items',
+                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                ),
+              ],
+            ],
           ),
         ),
         Expanded(
@@ -83,12 +114,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
               : _error != null
                   ? ErrorView(message: _error!, onRetry: _load)
                   : _products.isEmpty
-                      ? const Center(child: Text('No products found'))
+                      ? const Center(
+                          child: Text(
+                            'No products found',
+                            style: TextStyle(color: AppTheme.textMuted),
+                          ),
+                        )
                       : GridView.builder(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: MediaQuery.of(context).size.width > 700 ? 3 : 2,
-                            childAspectRatio: 0.72,
+                            crossAxisCount:
+                                MediaQuery.of(context).size.width > 700 ? 3 : 2,
+                            childAspectRatio: 0.65,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
@@ -101,7 +138,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ProductDetailScreen(product: product),
+                                    builder: (_) =>
+                                        ProductDetailScreen(product: product),
                                   ),
                                 );
                                 _load();

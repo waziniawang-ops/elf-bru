@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 import '../admin/admin_home_screen.dart';
 import '../customer/customer_home_screen.dart';
 
@@ -14,20 +15,19 @@ class AuthGate extends StatelessWidget {
       builder: (context, auth, _) {
         if (auth.isLoading) {
           return const Scaffold(
+            backgroundColor: AppTheme.bgDark,
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (!auth.isLoggedIn) {
-          return const LoginScreen();
-        }
-        if (auth.isAdmin) {
-          return const AdminHomeScreen();
-        }
+        if (!auth.isLoggedIn) return const LoginScreen();
+        if (auth.isAdmin) return const AdminHomeScreen();
         return const CustomerHomeScreen();
       },
     );
   }
 }
+
+// ── Login Screen ────────────────────────────────────────────────────────────
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _showRegister = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.error ?? 'Login failed'),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: const Color(0xFF5C1420),
         ),
       );
     }
@@ -68,77 +69,128 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.storefront, size: 72, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Elf Bru',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+      backgroundColor: AppTheme.bgDark,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF1C0D15), AppTheme.bgDark],
+            radius: 1.4,
+            center: Alignment.topCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 32),
+                    // Brand mark
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.gold, width: 1.5),
+                        color: AppTheme.surfaceMid,
+                      ),
+                      child: const Icon(
+                        Icons.spa_outlined,
+                        color: AppTheme.gold,
+                        size: 34,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'ELF BRU',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: 9,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(width: 36, height: 1, color: AppTheme.gold),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'LUXURY BEAUTY',
+                      style: TextStyle(
+                        color: AppTheme.gold,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    if (_showRegister)
+                      RegisterForm(
+                        onBack: () => setState(() => _showRegister = false),
+                      )
+                    else ...[
+                      TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(color: AppTheme.textPrimary),
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                          prefixIcon: Icon(Icons.phone_outlined),
                         ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _showRegister ? 'Create your account' : 'Sign in with your phone number',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 32),
-                  if (_showRegister)
-                    RegisterForm(
-                      onBack: () => setState(() => _showRegister = false),
-                    )
-                  else ...[
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone Number',
-                        prefixIcon: Icon(Icons.phone),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: const TextStyle(color: AppTheme.textPrimary),
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                        ),
+                        onSubmitted: (_) => _submit(),
                       ),
-                      onSubmitted: (_) => _submit(),
-                    ),
-                    const SizedBox(height: 24),
-                    Consumer<AuthProvider>(
-                      builder: (context, auth, _) {
-                        return SizedBox(
+                      const SizedBox(height: 28),
+                      Consumer<AuthProvider>(
+                        builder: (context, auth, _) => SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: auth.isLoading ? null : _submit,
                             child: auth.isLoading
                                 ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
-                                : const Text('Sign In'),
+                                : const Text('SIGN IN'),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => setState(() => _showRegister = true),
-                      child: const Text('New customer? Register here'),
-                    ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextButton(
+                        onPressed: () => setState(() => _showRegister = true),
+                        child: const Text(
+                          'New customer? Register here',
+                          style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -147,6 +199,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+// ── Register Form ───────────────────────────────────────────────────────────
 
 class RegisterForm extends StatefulWidget {
   final VoidCallback onBack;
@@ -158,11 +212,13 @@ class RegisterForm extends StatefulWidget {
 }
 
 class _RegisterFormState extends State<RegisterForm> {
-  final _phoneController = TextEditingController();
+  final _phoneController    = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
+  final _confirmController  = TextEditingController();
   final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _lastNameController  = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm  = true;
 
   @override
   void dispose() {
@@ -188,7 +244,7 @@ class _RegisterFormState extends State<RegisterForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.error ?? 'Registration failed'),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: const Color(0xFF5C1420),
         ),
       );
     }
@@ -197,53 +253,106 @@ class _RegisterFormState extends State<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'CREATE ACCOUNT',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2.5,
+          ),
+        ),
+        const SizedBox(height: 20),
         TextField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(labelText: 'Phone Number', prefixIcon: Icon(Icons.phone)),
+          style: const TextStyle(color: AppTheme.textPrimary),
+          decoration: const InputDecoration(
+            labelText: 'Phone Number',
+            prefixIcon: Icon(Icons.phone_outlined),
+          ),
         ),
         const SizedBox(height: 12),
-        TextField(
-          controller: _firstNameController,
-          decoration: const InputDecoration(labelText: 'First Name'),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _lastNameController,
-          decoration: const InputDecoration(labelText: 'Last Name'),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _firstNameController,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                decoration: const InputDecoration(labelText: 'First Name'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _lastNameController,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                decoration: const InputDecoration(labelText: 'Last Name'),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _passwordController,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+          obscureText: _obscurePassword,
+          style: const TextStyle(color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            labelText: 'Password',
+            prefixIcon: const Icon(Icons.lock_outlined),
+            suffixIcon: IconButton(
+              icon: Icon(_obscurePassword
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _confirmController,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Confirm Password'),
+          obscureText: _obscureConfirm,
+          style: const TextStyle(color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            labelText: 'Confirm Password',
+            prefixIcon: const Icon(Icons.lock_outlined),
+            suffixIcon: IconButton(
+              icon: Icon(_obscureConfirm
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
+            ),
+          ),
         ),
         const SizedBox(height: 24),
         Consumer<AuthProvider>(
-          builder: (context, auth, _) {
-            return SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: auth.isLoading ? null : _register,
-                child: auth.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Register'),
-              ),
-            );
-          },
+          builder: (context, auth, _) => SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: auth.isLoading ? null : _register,
+              child: auth.isLoading
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('CREATE ACCOUNT'),
+            ),
+          ),
         ),
-        TextButton(onPressed: widget.onBack, child: const Text('Back to Sign In')),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: widget.onBack,
+          child: const Text(
+            'Back to Sign In',
+            style: TextStyle(color: AppTheme.textMuted),
+          ),
+        ),
       ],
     );
   }

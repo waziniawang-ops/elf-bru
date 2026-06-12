@@ -149,6 +149,24 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  Widget _sectionLabel(String label) {
+    return Row(
+      children: [
+        Container(width: 3, height: 13, color: AppTheme.gold),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2.5,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _copyToClipboard(String value, String label) {
     Clipboard.setData(ClipboardData(text: value));
     showSnack(context, '$label copied');
@@ -156,16 +174,26 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _bankDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(
+            '$label: ',
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+          ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
           GestureDetector(
             onTap: () => _copyToClipboard(value, label),
-            child: const Icon(Icons.copy, size: 16, color: Colors.blueGrey),
+            child: const Icon(Icons.copy_outlined, size: 15, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -181,9 +209,16 @@ class _CartScreenState extends State<CartScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 12),
-            Text('Your cart is empty', style: TextStyle(fontSize: 16)),
+            Icon(Icons.shopping_bag_outlined, size: 56, color: AppTheme.borderColor),
+            SizedBox(height: 16),
+            Text(
+              'YOUR CART IS EMPTY',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ),
           ],
         ),
       );
@@ -249,16 +284,41 @@ class _CartScreenState extends State<CartScreen> {
               )),
 
           const SizedBox(height: 16),
-          Text(
-            'Total: ${currencyFormat.format(_total)}',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceMid,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'TOTAL',
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2.5,
+                  ),
+                ),
+                Text(
+                  currencyFormat.format(_total),
+                  style: const TextStyle(
+                    color: AppTheme.gold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          const Divider(height: 32),
-
-          const Text('Pickup Location',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
+          _sectionLabel('PICKUP LOCATION'),
+          const SizedBox(height: 10),
           DropdownButtonFormField<int>(
             value: _selectedLocationId,
             decoration: const InputDecoration(labelText: 'Select location'),
@@ -269,8 +329,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
 
           const SizedBox(height: 20),
-          const Text('Payment Method',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          _sectionLabel('PAYMENT METHOD'),
           RadioListTile<String>(
             title: const Text('Cash on Pickup'),
             value: 'cash',
@@ -288,34 +347,49 @@ class _CartScreenState extends State<CartScreen> {
 
           if (_paymentMethod == 'bank_transfer') ...[
             if (!_bankDetails.isEmpty) ...[
-              Card(
-                color: Colors.blue.shade50,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Bank Transfer Details',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      const SizedBox(height: 10),
-                      if (_bankDetails.bankName.isNotEmpty)
-                        _bankDetailRow('Bank', _bankDetails.bankName),
-                      if (_bankDetails.accountName.isNotEmpty)
-                        _bankDetailRow('Account Name', _bankDetails.accountName),
-                      if (_bankDetails.accountNumber.isNotEmpty)
-                        _bankDetailRow('Account Number', _bankDetails.accountNumber),
-                      if (_bankDetails.instructions.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          _bankDetails.instructions,
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceMid,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.gold.withAlpha(80)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.account_balance_outlined,
+                            color: AppTheme.gold, size: 16),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'BANK TRANSFER DETAILS',
+                          style: TextStyle(
+                            color: AppTheme.gold,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (_bankDetails.bankName.isNotEmpty)
+                      _bankDetailRow('Bank', _bankDetails.bankName),
+                    if (_bankDetails.accountName.isNotEmpty)
+                      _bankDetailRow('Account Name', _bankDetails.accountName),
+                    if (_bankDetails.accountNumber.isNotEmpty)
+                      _bankDetailRow('Account Number', _bankDetails.accountNumber),
+                    if (_bankDetails.instructions.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _bankDetails.instructions,
+                        style: const TextStyle(
+                            color: AppTheme.textMuted, fontSize: 12, height: 1.5),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -348,11 +422,11 @@ class _CartScreenState extends State<CartScreen> {
               onPressed: _checkingOut ? null : _checkout,
               child: _checkingOut
                   ? const SizedBox(
-                      height: 20,
-                      width: 20,
+                      height: 18,
+                      width: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Place Order'),
+                  : const Text('PLACE ORDER'),
             ),
           ),
           const SizedBox(height: 16),

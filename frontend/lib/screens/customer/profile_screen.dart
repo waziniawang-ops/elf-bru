@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/common_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,18 +13,17 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _firstNameController   = TextEditingController();
+  final _lastNameController    = TextEditingController();
+  final _emailController       = TextEditingController();
   bool _savingProfile = false;
 
-  // Password change
-  final _oldPassController = TextEditingController();
-  final _newPassController = TextEditingController();
+  final _oldPassController     = TextEditingController();
+  final _newPassController     = TextEditingController();
   final _confirmPassController = TextEditingController();
   bool _savingPassword = false;
-  bool _obscureOld = true;
-  bool _obscureNew = true;
+  bool _obscureOld     = true;
+  bool _obscureNew     = true;
   bool _obscureConfirm = true;
 
   @override
@@ -34,8 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = context.read<AuthProvider>().user;
     if (user != null) {
       _firstNameController.text = user.firstName;
-      _lastNameController.text = user.lastName;
-      _emailController.text = user.email;
+      _lastNameController.text  = user.lastName;
+      _emailController.text     = user.email;
     }
   }
 
@@ -55,8 +53,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final updated = await ApiService.instance.updateProfile({
         'first_name': _firstNameController.text.trim(),
-        'last_name': _lastNameController.text.trim(),
-        'email': _emailController.text.trim(),
+        'last_name':  _lastNameController.text.trim(),
+        'email':      _emailController.text.trim(),
       });
       if (mounted) {
         context.read<AuthProvider>().updateUser(updated);
@@ -81,8 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _savingPassword = true);
     try {
       await ApiService.instance.changePassword(
-        oldPassword: _oldPassController.text,
-        newPassword: _newPassController.text,
+        oldPassword:        _oldPassController.text,
+        newPassword:        _newPassController.text,
         newPasswordConfirm: _confirmPassController.text,
       );
       if (mounted) {
@@ -101,58 +99,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
+    final initials = user?.fullName.isNotEmpty == true
+        ? user!.fullName[0].toUpperCase()
+        : (user?.phoneNumber.isNotEmpty == true ? user!.phoneNumber[0] : '?');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(title: const Text('MY PROFILE')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar + phone
+            // ── Avatar header ──────────────────────────────────
             Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(
-                      user?.fullName.isNotEmpty == true
-                          ? user!.fullName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(fontSize: 28, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Column(
+                  children: [
+                    // Gold ring avatar
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.gold, width: 1.5),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(3),
+                        child: CircleAvatar(
+                          backgroundColor: AppTheme.surfaceMid,
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              fontSize: 30,
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    user?.phoneNumber ?? '',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
+                    const SizedBox(height: 14),
+                    if (user?.fullName.isNotEmpty == true)
+                      Text(
+                        user!.fullName,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.phoneNumber ?? '',
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 28),
-            const Text('Profile Information',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: _firstNameController,
-              decoration: const InputDecoration(labelText: 'First Name'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _lastNameController,
-              decoration: const InputDecoration(labelText: 'Last Name'),
+            // ── Profile section ────────────────────────────────
+            _sectionHeader('PROFILE INFORMATION'),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _firstNameController,
+                    style: const TextStyle(color: AppTheme.textPrimary),
+                    decoration: const InputDecoration(labelText: 'First Name'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _lastNameController,
+                    style: const TextStyle(color: AppTheme.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Last Name'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email'),
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.mail_outline),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -161,55 +205,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Save Profile'),
+                    : const Text('SAVE PROFILE'),
               ),
             ),
 
-            const SizedBox(height: 32),
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text('Change Password',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 36),
+            Container(height: 1, color: AppTheme.borderColor),
+            const SizedBox(height: 28),
 
-            TextField(
+            // ── Password section ───────────────────────────────
+            _sectionHeader('CHANGE PASSWORD'),
+            const SizedBox(height: 14),
+            _passwordField(
               controller: _oldPassController,
-              obscureText: _obscureOld,
-              decoration: InputDecoration(
-                labelText: 'Current Password',
-                suffixIcon: IconButton(
-                  icon: Icon(_obscureOld ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () => setState(() => _obscureOld = !_obscureOld),
-                ),
-              ),
+              label: 'Current Password',
+              obscure: _obscureOld,
+              onToggle: () => setState(() => _obscureOld = !_obscureOld),
             ),
             const SizedBox(height: 12),
-            TextField(
+            _passwordField(
               controller: _newPassController,
-              obscureText: _obscureNew,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                suffixIcon: IconButton(
-                  icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () => setState(() => _obscureNew = !_obscureNew),
-                ),
-              ),
+              label: 'New Password',
+              obscure: _obscureNew,
+              onToggle: () => setState(() => _obscureNew = !_obscureNew),
             ),
             const SizedBox(height: 12),
-            TextField(
+            _passwordField(
               controller: _confirmPassController,
-              obscureText: _obscureConfirm,
-              decoration: InputDecoration(
-                labelText: 'Confirm New Password',
-                suffixIcon: IconButton(
-                  icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                ),
-              ),
+              label: 'Confirm New Password',
+              obscure: _obscureConfirm,
+              onToggle: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -220,11 +251,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Change Password'),
+                    : const Text('CHANGE PASSWORD'),
               ),
             ),
-            const SizedBox(height: 16),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Row(
+      children: [
+        Container(width: 3, height: 14, color: AppTheme.gold),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      style: const TextStyle(color: AppTheme.textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.lock_outlined),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          ),
+          onPressed: onToggle,
         ),
       ),
     );

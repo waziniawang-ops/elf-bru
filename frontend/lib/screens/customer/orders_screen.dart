@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/models.dart';
 import '../../services/api_service.dart';
@@ -25,25 +26,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final orders = await ApiService.instance.getOrders();
-      if (mounted) {
-        setState(() {
-          _orders = orders;
-          _loading = false;
-        });
-      }
+      if (mounted) setState(() { _orders = orders; _loading = false; });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _loading = false;
-        });
-      }
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
@@ -59,7 +47,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             child: const Text('Keep Order'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade800),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Cancel Order'),
           ),
@@ -78,14 +66,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'confirmed':
-        return Colors.blue;
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.orange;
+      case 'confirmed': return const Color(0xFF42A5F5);
+      case 'completed': return const Color(0xFF66BB6A);
+      case 'cancelled': return const Color(0xFFEF5350);
+      default:          return const Color(0xFFFFB300);
     }
   }
 
@@ -98,82 +82,168 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 12),
-            Text('No orders yet', style: TextStyle(fontSize: 16)),
+            Icon(Icons.receipt_long_outlined, size: 56, color: AppTheme.borderColor),
+            SizedBox(height: 16),
+            Text(
+              'NO ORDERS YET',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ),
           ],
         ),
       );
     }
 
+    final dateFormat = DateFormat('MMM d, yyyy · HH:mm');
+
     return RefreshIndicator(
+      color: AppTheme.primary,
       onRefresh: _load,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         itemCount: _orders.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
           final order = _orders[index];
-          return Card(
+          final statusColor = _statusColor(order.status);
+          return Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceDark,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: ExpansionTile(
-              title: Text('Order #${order.id}'),
-              subtitle: Row(
+              tilePadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+              childrenPadding: EdgeInsets.zero,
+              title: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _statusColor(order.status).withAlpha(30),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _statusColor(order.status)),
-                    ),
+                  Expanded(
                     child: Text(
-                      order.statusLabel,
-                      style: TextStyle(
-                        color: _statusColor(order.status),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      'Order #${order.id}',
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(currencyFormat.format(order.totalAmount)),
+                  // Status chip
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: statusColor.withAlpha(120)),
+                      borderRadius: BorderRadius.circular(20),
+                      color: statusColor.withAlpha(25),
+                    ),
+                    child: Text(
+                      order.statusLabel.toUpperCase(),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
                 ],
               ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  children: [
+                    Text(
+                      currencyFormat.format(order.totalAmount),
+                      style: const TextStyle(
+                        color: AppTheme.gold,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (order.createdAt != null) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        dateFormat.format(order.createdAt!.toLocal()),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                Container(
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: AppTheme.borderColor)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pickup: ${order.pickupLocationName}'),
-                      Text('Payment: ${order.paymentMethodLabel}'),
-                      if (order.createdAt != null)
-                        Text(
-                          'Placed: ${order.createdAt!.toLocal().toString().substring(0, 16)}',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      const SizedBox(height: 8),
-                      ...order.items.map(
-                        (item) => Text(
-                          '• ${item.productName} x${item.quantity} — ${currencyFormat.format(item.subtotal)}',
+                      _infoRow('Pickup', order.pickupLocationName),
+                      _infoRow('Payment', order.paymentMethodLabel),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'ITEMS',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 6),
+                      ...order.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${item.productName} × ${item.quantity}',
+                                  style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                currencyFormat.format(item.subtotal),
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
                       Wrap(
                         spacing: 8,
+                        runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
                             onPressed: () => ReceiptDialog.show(context, order),
-                            icon: const Icon(Icons.receipt),
-                            label: const Text('View Receipt'),
+                            icon: const Icon(Icons.receipt_outlined, size: 16),
+                            label: const Text('RECEIPT'),
                           ),
                           if (order.status == 'pending')
                             OutlinedButton.icon(
                               onPressed: () => _cancelOrder(order),
-                              icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                              label: const Text('Cancel',
-                                  style: TextStyle(color: Colors.red)),
+                              icon: const Icon(Icons.cancel_outlined,
+                                  size: 16, color: Color(0xFFEF5350)),
+                              label: const Text('CANCEL',
+                                  style: TextStyle(color: Color(0xFFEF5350))),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.red),
+                                side: const BorderSide(color: Color(0xFFEF5350)),
                               ),
                             ),
                         ],
@@ -185,6 +255,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+          ),
+        ],
       ),
     );
   }
