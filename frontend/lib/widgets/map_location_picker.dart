@@ -34,6 +34,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     _mapController = MapController();
     if (widget.initialLocation != null) {
       _center = widget.initialLocation!;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _goToMyLocation());
     }
   }
 

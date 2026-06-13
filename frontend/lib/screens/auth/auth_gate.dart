@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -60,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.error ?? 'Login failed'),
-          backgroundColor: const Color(0xFF5C1420),
+          backgroundColor: const Color(0xFF8B3030),
         ),
       );
     }
@@ -72,10 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppTheme.bgDark,
       body: Container(
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [AppTheme.surfaceMid, AppTheme.bgDark],
-            radius: 1.2,
-            center: Alignment.topCenter,
           ),
         ),
         child: SafeArea(
@@ -88,41 +89,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 32),
-                    // Brand mark
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.gold, width: 1.5),
-                        color: AppTheme.surfaceMid,
-                      ),
-                      child: const Icon(
-                        Icons.spa_outlined,
-                        color: AppTheme.gold,
-                        size: 34,
-                      ),
+                    // Brand logo
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: 90,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 22),
-                    const Text(
-                      'ELF BRU',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 9,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(width: 36, height: 1, color: AppTheme.gold),
-                    const SizedBox(height: 8),
-                    const Text(
+                    const SizedBox(height: 12),
+                    Container(width: 48, height: 0.8, color: AppTheme.silver),
+                    const SizedBox(height: 10),
+                    Text(
                       'LUXURY BEAUTY',
-                      style: TextStyle(
-                        color: AppTheme.gold,
+                      style: GoogleFonts.lato(
+                        color: AppTheme.silver,
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
-                        letterSpacing: 4,
+                        letterSpacing: 5,
                       ),
                     ),
                     const SizedBox(height: 48),
@@ -244,7 +226,7 @@ class _RegisterFormState extends State<RegisterForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.error ?? 'Registration failed'),
-          backgroundColor: const Color(0xFF5C1420),
+          backgroundColor: const Color(0xFF8B3030),
         ),
       );
     }
@@ -255,9 +237,9 @@ class _RegisterFormState extends State<RegisterForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'CREATE ACCOUNT',
-          style: TextStyle(
+          style: GoogleFonts.lato(
             color: AppTheme.textPrimary,
             fontSize: 13,
             fontWeight: FontWeight.w600,

@@ -34,7 +34,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
         child: AppBar(
-          title: const Text('ELF BRU'),
+          title: Image.asset('assets/images/logo.png', height: 34, fit: BoxFit.contain),
           actions: [
             IconButton(
               icon: const Icon(Icons.person_outline),

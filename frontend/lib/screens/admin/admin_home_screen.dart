@@ -31,7 +31,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final auth = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Elf Bru Admin'),
+        title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/images/logo.png', height: 28, fit: BoxFit.contain),
+              const SizedBox(width: 10),
+              const Text('ADMIN', style: TextStyle(fontSize: 11, letterSpacing: 3, fontWeight: FontWeight.w400)),
+            ],
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
